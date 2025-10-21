@@ -34,10 +34,12 @@ export default function AddUserModal({ onClose }) {
           <div>
             <label className="block text-gray-300 mb-2 text-sm">Rôle</label>
             <select className="w-full bg-slate-700 text-white px-4 py-3 rounded-lg border border-slate-600 focus:border-purple-500 focus:outline-none">
-              <option>Responsable Inspection</option>
-              <option>Responsable Production</option>
-              <option>Président Jury</option>
-              <option>Membre Jury</option>
+              <option value="responsable_inspection">Responsable Inspection</option>
+              <option value="responsable_production">Responsable Production</option>
+              <option value="president_jury">Président Jury</option>
+              <option value="Responsable_jurés">Responsable jurés</option>
+              <option value="admin">Admin</option>
+              <option value="utilisateur">Utilisateur</option>
             </select>
           </div>
 

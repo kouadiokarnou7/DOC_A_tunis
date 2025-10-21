@@ -2,8 +2,14 @@
 import { useState } from 'react';
 import { Film, Menu } from 'lucide-react';
 
-export default function AdminLayout({ sidebarNav, main }) {
+export default function AdminLayout({ sidebarNav, children, main }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const content = main ?? children;
+
+  // If used as a Next.js route layout (no sidebar provided), render children only to avoid double layout
+  if (!sidebarNav) {
+    return <>{children}</>;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -42,7 +48,7 @@ export default function AdminLayout({ sidebarNav, main }) {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-4 lg:p-8">{main}</main>
+        <main className="flex-1 p-4 lg:p-8">{content}</main>
       </div>
     </div>
   );
