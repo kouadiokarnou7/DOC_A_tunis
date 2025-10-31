@@ -29,19 +29,27 @@ export default function useInscription() {
         try {
             setError(null);
             setLoading(true);
+
+            // Normaliser la charge utile pour l'API
+            const payload = {
+                nomComplet: userInfo.nomComplet ?? userInfo.name,
+                email: userInfo.email,
+                role: userInfo.role,
+                motDePasse: userInfo.motDePasse ?? userInfo.password,
+            };
             
-            const response = await axios.post('/api/administrateur/ajout', userInfo);
+            const response = await axios.post('/api/administrateur/ajout', payload);
             
             if (response.data.success) {
                 setIsAuthenticated(true);
                 setUser(response.data.user);
-                // Redirection vers la page de connexion ou dashboard
-                router.push('/connexion');
+                // Redirection ou notification
+                alert('Utilisateur enregistré avec succès');
             } else {
-                setError(response.data.message || 'Erreur lors de l\'inscription');
+                setError(response.data.message || "Erreur lors de l'inscription");
             }
         } catch (err) {
-            setError(err.response?.data?.message || 'Erreur lors de l\'inscription');
+            setError(err.response?.data?.message || "Erreur lors de l'inscription");
         } finally {
             setLoading(false);
         }

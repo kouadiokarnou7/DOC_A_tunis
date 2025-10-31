@@ -5,7 +5,7 @@ import {
   CheckCircle, AlertTriangle, ChevronLeft, ChevronRight, Search 
 } from 'lucide-react';
 import AdminLayout from './layout';
-import AddUserModal from '../../components/AddUserModal';
+import AddUserModal from '@/components/modal/AddUserModal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
@@ -17,15 +17,8 @@ export default function AdminDashboard() {
   const [page, setPage] = useState(1);
   const usersPerPage = 3; // ✅ nombre d'utilisateurs par page
 
-  // Données mockées
-  const users = [
-    { id: 1, name: 'Amina Benali', email: 'amina@doctunis.tn', role: 'Responsable Inspection', status: 'Actif' },
-    { id: 2, name: 'Karim Essid', email: 'karim@doctunis.tn', role: 'Responsable Production', status: 'Actif' },
-    { id: 3, name: 'Hatem Kallel', email: 'hatem@doctunis.tn', role: 'Membre Jury', status: 'Inactif' },
-    { id: 4, name: 'Sarra Trabelsi', email: 'sarra@doctunis.tn', role: 'Président Jury', status: 'Actif' },
-    { id: 5, name: 'Nadia Mansour', email: 'nadia@doctunis.tn', role: 'Responsable Production', status: 'Inactif' },
-    { id: 6, name: 'Rami Gharbi', email: 'rami@doctunis.tn', role: 'admin', status: 'Actif' },
-  ];
+  // Données récupérées depuis l'API
+  const [users, setUsers] = useState([]);
 
   // Rôles mockés
   const roles = [
@@ -91,7 +84,7 @@ export default function AdminDashboard() {
   // Graphique (répartition par rôle)
   const chartData = useMemo(() => {
     const map = new Map();
-    users.forEach((u) => {
+    (users || []).forEach((u) => {
       map.set(u.role, (map.get(u.role) || 0) + 1);
     });
     return Array.from(map.entries()).map(([role, count]) => ({ role, count }));
@@ -337,7 +330,14 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {showAddUserModal && <AddUserModal onClose={() => setShowAddUserModal(false)} />}
+      {showAddUserModal && (
+        <AddUserModal
+          onClose={() => setShowAddUserModal(false)}
+          onCreated={() => {
+            setPage(1);
+          }}
+        />
+      )}
     </div>
   );
 

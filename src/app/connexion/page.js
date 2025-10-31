@@ -1,14 +1,15 @@
-
 'use client';
 import { useState } from "react";
-import useConnexion from "@/hooks/useConnexion";
+import useConnexion from "../../hooks/hookconnexion.js";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function ConnexionPage() {
-  const { login, error } = useConnexion();
+  const { login, error, logout } = useConnexion();
   const [formdata, setFormdata] = useState({
     identifier: "", // Un seul champ pour username ou email
     password: ""
   });
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
     setFormdata({
@@ -50,20 +51,29 @@ export default function ConnexionPage() {
             />
           </div>
 
-          <div>
+          <div className="relative">
             <label htmlFor="password" className="block text-gray-300 mb-2">
               Mot de passe
             </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              onChange={handleChange}
-              value={formdata.password}
-              className="w-full px-4 py-2 rounded-md bg-slate-700 text-white border border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-400"
-              placeholder="Entrez votre mot de passe"
-              required
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                name="password"
+                onChange={handleChange}
+                value={formdata.password}
+                className="w-full px-4 py-2 pr-10 rounded-md bg-slate-700 text-white border border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                placeholder="Entrez votre mot de passe"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
           </div>
 
           <button
