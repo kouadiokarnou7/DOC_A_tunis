@@ -1,5 +1,5 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { 
   Users, UserPlus, Shield, Eye, Edit, Trash2, 
   CheckCircle, AlertTriangle, ChevronLeft, ChevronRight, Search 
@@ -9,6 +9,7 @@ import AddUserModal from '@/components/modal/AddUserModal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import axios from 'axios';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('users');
@@ -19,46 +20,27 @@ export default function AdminDashboard() {
 
   // Données récupérées depuis l'API
   const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Rôles mockés
-  const roles = [
-    {
-      id: 'resp_inspection',
-      name: 'Responsable Inspection',
-      description: 'Gère les inspections, affecte les inspecteurs et valide les rapports.',
-      permissions: ['Voir dossiers', 'Assigner inspecteurs', 'Valider inspections'],
-    },
-    {
-      id: 'resp_production',
-      name: 'Responsable Production',
-      description: 'Supervise la production et la conformité documentaire.',
-      permissions: ['Voir dossiers', 'Valider conformité', 'Générer rapports'],
-    },
-    {
-      id: 'president_jury',
-      name: 'Président Jury',
-      description: 'Pilote les comités, arbitre et signe les décisions.',
-      permissions: ['Voir dossiers', 'Planifier séances', 'Signer décisions'],
-    },
-    {
-      id: 'membre_jury',
-      name: 'Membre Jury',
-      description: 'Participe aux évaluations et formulaires de notation.',
-      permissions: ['Voir dossiers', 'Noter dossiers'],
-    },
-    {
-      id: 'admin',
-      name: 'Admin',
-      description: 'Gère l\'ensemble des fonctionnalités du système.',
-      permissions: ['Voir dossiers', 'Assigner inspecteurs', 'Valider inspections', 'Planifier séances', 'Signer décisions'],
-    },
-    {
-      id: 'utilisateur',
-      name: 'Utilisateur',
-      description: 'Accède aux dossiers et aux fonctionnalités limitées.',
-      permissions: ['Voir dossiers', 'Noter dossiers'],
+  // Charger les utilisateurs depuis l'API
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('/api/administrateur/users');
+      if (response.data.success) {
+        setUsers(response.data.users);
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des utilisateurs:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
 
   // Statistiques
   const totalUsers = users.length;
@@ -335,6 +317,7 @@ export default function AdminDashboard() {
           onClose={() => setShowAddUserModal(false)}
           onCreated={() => {
             setPage(1);
+            fetchUsers(); // Rafraîchir la liste après ajout
           }}
         />
       )}
