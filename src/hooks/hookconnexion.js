@@ -34,22 +34,23 @@ export default function useConnexion() {
     // Fonction pour rediriger selon le rôle
     const redirectByRole = (role) => {
         switch (role) {
-            case 'admin':
+            case 'ADMIN':
                 router.push('/administrateurs');
                 break;
-            case 'responsable_inspection':
+            case 'RESPONSABLE_INSPECTION':
                 router.push('/Resp_inspection');
                 break;
-            case 'responsable_production':
+            case 'RESPONSABLE_PRODUCTION':
                 router.push('/Resp_production');
                 break;
-            case 'president_jurés':
-                router.push('/president_jury');
+            case 'PRESIDENT_JURY':
+            case 'PRESIDENT_JURÉS':
+                router.push('/President_jury');
                 break;
                   
-            case 'utilisateur':
+            case 'UTILISATEUR':
             default:
-                router.push('/dashboard');
+                router.push('/');
                 break;
         }
     };
@@ -59,7 +60,13 @@ export default function useConnexion() {
             setError(null);
             setLoading(true);
             
-            const response = await axios.post('/api/auth/login', credentials);
+            // Normaliser les noms de champs (identifier -> email)
+            const payload = {
+                email: credentials.email ?? credentials.identifier,
+                password: credentials.password,
+            };
+            
+            const response = await axios.post('/api/auth/login', payload);
             
             if (response.data.success) {
                 setIsAuthenticated(true);

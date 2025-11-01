@@ -30,13 +30,21 @@ export default function useInscription() {
             setError(null);
             setLoading(true);
             
-            const response = await axios.post('/api/administrateur/ajout', userInfo);
+            // Normaliser les noms de champs
+            const payload = {
+                nomComplet: userInfo.nomComplet ?? userInfo.nomcomplet,
+                email: userInfo.email,
+                password: userInfo.password,
+            };
+            
+            const response = await axios.post('/api/auth/register', payload);
             
             if (response.data.success) {
                 setIsAuthenticated(true);
                 setUser(response.data.user);
-                // Redirection vers la page de connexion ou dashboard
-                router.push('/connexion');
+                // Redirection vers la page principale avec le nom d'utilisateur
+                const username = encodeURIComponent(response.data.user?.nomComplet || '');
+                router.push('/');
             } else {
                 setError(response.data.message || 'Erreur lors de l\'inscription');
             }

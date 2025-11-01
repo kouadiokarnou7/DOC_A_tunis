@@ -1,11 +1,40 @@
 'use client';
 
-import { useState } from 'react';
-import { Film, Menu, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Film, Menu, X, User, LogOut } from 'lucide-react';
 import Link from 'next/link';
+import axios from 'axios';
 
 export default function LandingHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await axios.get('/api/auth/status');
+        if (response.data.isAuthenticated && response.data.user) {
+          setUser(response.data.user);
+        }
+      } catch (err) {
+        console.error('Erreur vérification auth:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    checkAuth();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await axios.post('/api/auth/logout');
+      setUser(null);
+      window.location.href = '/';
+    } catch (err) {
+      console.error('Erreur logout:', err);
+    }
+  };
 
   return (
     <nav className="fixed w-full z-50 bg-slate-900/80 backdrop-blur-md border-b border-purple-500/20">
@@ -30,12 +59,28 @@ export default function LandingHeader() {
             <a href="#jury" className="text-gray-300 hover:text-purple-400 transition">
               Jury
             </a>
-            <Link 
-              href="/connexion"
-              className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-full transition"
-            >
-              Connexion 
-            </Link>
+            {user ? (
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 text-gray-300">
+                  <User className="w-4 h-4" />
+                  <span className="text-sm">{user.nomComplet}</span>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-full transition flex items-center gap-2"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Déconnexion
+                </button>
+              </div>
+            ) : (
+              <Link 
+                href="/connexion"
+                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-full transition"
+              >
+                Connexion 
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -80,12 +125,31 @@ export default function LandingHeader() {
             >
               Jury
             </a>
-            <Link 
-              href="/connexion"
-              className="block w-full bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-full text-center"
-            >
-              Connexion 
-            </Link>
+            {user ? (
+              <>
+                <div className="flex items-center gap-2 text-gray-300 py-2 border-t border-purple-500/20">
+                  <User className="w-4 h-4" />
+                  <span>{user.nomComplet}</span>
+                </div>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="block w-full bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-full text-center flex items-center justify-center gap-2"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Déconnexion
+                </button>
+              </>
+            ) : (
+              <Link 
+                href="/connexion"
+                className="block w-full bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-full text-center"
+              >
+                Connexion 
+              </Link>
+            )}
           </div>
         </div>
       )}
