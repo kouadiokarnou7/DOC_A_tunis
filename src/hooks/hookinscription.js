@@ -42,9 +42,8 @@ export default function useInscription() {
             if (response.data.success) {
                 setIsAuthenticated(true);
                 setUser(response.data.user);
-                // Redirection vers la page principale avec le nom d'utilisateur
-                const username = encodeURIComponent(response.data.user?.nomComplet || '');
-                router.push('/');
+                // Redirection vers la page de connexion ou dashboard
+                router.push('/connexion');
             } else {
                 setError(response.data.message || 'Erreur lors de l\'inscription');
             }

@@ -25,3 +25,43 @@ model User {
   createdAt       DateTime @default(now())
   deletedAt       DateTime? // null = non supprimé
 }
+
+model Jury {
+  code           String   @id
+  nom            String
+  prenom         String
+  date_Naissance DateTime
+  telephone      String
+  nationalite    String
+}
+
+model Realisateur {
+  code          String   @id
+  nom           String
+  prenom        String
+  dateNaissance DateTime
+  films         Film[]   @relation("RealisateurFilms")
+  createdAt     DateTime @default(now())
+}
+
+model Producteur {
+  code          String   @id
+  nom           String
+  prenom        String
+  dateNaissance DateTime
+  films         Film[]   @relation("ProducteurFilms")
+  createdAt     DateTime @default(now())
+}
+
+model Film {
+  codeFilm       String       @id
+  titre          String
+  dateFilm       DateTime
+  sujet          String
+  image          String?      // URL ou chemin vers l'image
+  realisateurCode String
+  producteurCode  String
+  realisateur    Realisateur  @relation("RealisateurFilms", fields: [realisateurCode], references: [code])
+  producteur     Producteur   @relation("ProducteurFilms", fields: [producteurCode], references: [code])
+  createdAt      DateTime     @default(now())
+}
