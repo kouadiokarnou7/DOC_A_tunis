@@ -16,7 +16,7 @@ export default function RespInspection() {
   const [showModalRealisateur, setShowModalRealisateur] = useState(false);
   const [showModalFilm, setShowModalFilm] = useState(false);
 
-  // Fetch toutes les données depuis l'API
+  // Charger les données depuis l'API
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -24,7 +24,7 @@ export default function RespInspection() {
         const [prodsRes, realsRes, filmsRes] = await Promise.all([
           fetch("/api/producteurs"),
           fetch("/api/realisateurs"),
-          fetch("/api/films")
+          fetch("/api/films"),
         ]);
 
         const prodsData = await prodsRes.json();
@@ -56,31 +56,27 @@ export default function RespInspection() {
     setRealisateurs((prev) => [...prev, newRealisateur]);
   };
 
-  // Fonction pour obtenir le nom complet d'un réalisateur
+  // Nom complet du réalisateur
   const getRealisateurName = (realisateurCode) => {
     if (!realisateurCode) return "N/A";
-    
-    // Si c'est déjà un nom (string sans code)
-    if (typeof realisateurCode === 'string' && !realisateurCode.startsWith('REAL')) {
+
+    if (typeof realisateurCode === "string" && !realisateurCode.startsWith("REAL")) {
       return realisateurCode;
     }
 
-    // Chercher dans la liste des réalisateurs
-    const real = realisateurs.find(r => r.code === realisateurCode);
+    const real = realisateurs.find((r) => r.code === realisateurCode);
     return real ? `${real.prenom} ${real.nom}` : realisateurCode;
   };
 
-  // Fonction pour obtenir le nom complet d'un producteur
+  // Nom complet du producteur
   const getProducteurName = (producteurCode) => {
     if (!producteurCode) return "N/A";
-    
-    // Si c'est déjà un nom (string sans code)
-    if (typeof producteurCode === 'string' && !producteurCode.startsWith('PROD')) {
+
+    if (typeof producteurCode === "string" && !producteurCode.startsWith("PROD")) {
       return producteurCode;
     }
 
-    // Chercher dans la liste des producteurs
-    const prod = producteurs.find(p => p.code === producteurCode);
+    const prod = producteurs.find((p) => p.code === producteurCode);
     return prod ? `${prod.prenom} ${prod.nom}` : producteurCode;
   };
 
@@ -100,31 +96,31 @@ export default function RespInspection() {
           </p>
         </div>
 
-        {/* Boutons d'action */}
+        {/* Boutons */}
         <div className="flex flex-wrap gap-4 mb-8">
           <button
             onClick={() => setShowModalProducteur(true)}
-            className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-3 rounded-xl hover:from-purple-700 hover:to-purple-800 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+            className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-3 rounded-xl hover:scale-105 transition"
           >
             <Users size={18} /> Nouveau Producteur
           </button>
 
           <button
             onClick={() => setShowModalRealisateur(true)}
-            className="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-violet-700 text-white px-6 py-3 rounded-xl hover:from-violet-700 hover:to-violet-800 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+            className="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-violet-700 text-white px-6 py-3 rounded-xl hover:scale-105 transition"
           >
             <Users size={18} /> Nouveau Réalisateur
           </button>
 
           <button
             onClick={() => setShowModalFilm(true)}
-            className="flex items-center gap-2 bg-gradient-to-r from-fuchsia-600 to-fuchsia-700 text-white px-6 py-3 rounded-xl hover:from-fuchsia-700 hover:to-fuchsia-800 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+            className="flex items-center gap-2 bg-gradient-to-r from-fuchsia-600 to-fuchsia-700 text-white px-6 py-3 rounded-xl hover:scale-105 transition"
           >
             <Film size={18} /> Nouveau Film
           </button>
         </div>
 
-        {/* Tableau des films */}
+        {/* Tableau */}
         <div className="bg-white rounded-2xl shadow-xl border border-purple-100 overflow-hidden">
           {loading ? (
             <div className="flex items-center justify-center py-20">
@@ -163,8 +159,8 @@ export default function RespInspection() {
                     </tr>
                   ) : (
                     films.map((film) => (
-                      <tr 
-                        key={film.codeFilm} 
+                      <tr
+                        key={film.codeFilm}
                         className="border-b border-purple-50 hover:bg-purple-50 transition"
                       >
                         <td className="px-6 py-4">
@@ -174,10 +170,10 @@ export default function RespInspection() {
                         </td>
                         <td className="px-6 py-4 font-medium text-gray-800">{film.titre}</td>
                         <td className="px-6 py-4 text-gray-600">
-                          {getRealisateurName(film.realisateur)}
+                          {getRealisateurName(film.realisateur?.code || film.realisateur)}
                         </td>
                         <td className="px-6 py-4 text-gray-600">
-                          {getProducteurName(film.producteur)}
+                          {getProducteurName(film.producteur?.code || film.producteur)}
                         </td>
                         <td className="px-6 py-4 text-gray-600">
                           {film.duree ? `${film.duree} min` : "N/A"}

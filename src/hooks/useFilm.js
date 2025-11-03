@@ -1,17 +1,15 @@
-// hooks/useFilm.js
 "use client";
 import { useState, useEffect } from "react";
 
 export function useFilm() {
-  // ✅ Initialisation : realisateur et producteur sont des CHAÎNES VIDES, pas des objets !
   const [filmData, setFilmData] = useState({
     codeFilm: "",
     titre: "",
     dateFilm: "",
     sujet: "",
-    realisateur: "", // ← STRING (code), pas un objet
-    producteur: "",  // ← STRING (code)
-    image: "",
+    codeRealisateur: "", // correspond à l'API
+    codeProducteur: "",  // correspond à l'API
+    image: "",           // base64
   });
 
   const [realisateurs, setRealisateurs] = useState([]);
@@ -20,7 +18,7 @@ export function useFilm() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  // Charger les réalisateurs et producteurs (exemple avec fetch)
+  // Charger les réalisateurs et producteurs
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -28,14 +26,19 @@ export function useFilm() {
           fetch("/api/realisateurs"),
           fetch("/api/producteurs"),
         ]);
-        const realisateursData = await realRes.json();
-        const producteursData = await prodRes.json();
-        setRealisateurs(realisateursData);
-        setProducteurs(producteursData);
+
+        const realData = await realRes.json();
+        const prodData = await prodRes.json();
+
+        setRealisateurs(Array.isArray(realData.data) ? realData.data : []);
+        setProducteurs(Array.isArray(prodData.data) ? prodData.data : []);
       } catch (err) {
         setError("Erreur lors du chargement des données.");
+        setRealisateurs([]);
+        setProducteurs([]);
       }
     };
+
     fetchData();
   }, []);
 
@@ -47,19 +50,12 @@ export function useFilm() {
       if (file) {
         const reader = new FileReader();
         reader.onloadend = () => {
-          setFilmData((prev) => ({
-            ...prev,
-            image: reader.result, // base64 string
-          }));
+          setFilmData((prev) => ({ ...prev, image: reader.result }));
         };
         reader.readAsDataURL(file);
       }
     } else {
-      // ✅ Ici, value est toujours une chaîne (même pour <select>)
-      setFilmData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
+      setFilmData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
@@ -68,6 +64,12 @@ export function useFilm() {
     setIsLoading(true);
     setError("");
     setSuccess(false);
+
+    if (!filmData.codeRealisateur || !filmData.codeProducteur) {
+      setError("Veuillez sélectionner un réalisateur et un producteur");
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const response = await fetch("/api/films", {
@@ -78,12 +80,13 @@ export function useFilm() {
 
       if (response.ok) {
         setSuccess(true);
-        // Réinitialiser ou appeler onSaved si besoin
+        // Optionnel : reset du formulaire
+        // setFilmData({ codeFilm: "", titre: "", dateFilm: "", sujet: "", codeRealisateur: "", codeProducteur: "", image: "" });
       } else {
         const data = await response.json();
-        setError(data.message || "Erreur lors de l'enregistrement.");
+        setError(data.error || "Erreur lors de l'enregistrement.");
       }
-    } catch (err) {
+    } catch {
       setError("Erreur réseau.");
     } finally {
       setIsLoading(false);
