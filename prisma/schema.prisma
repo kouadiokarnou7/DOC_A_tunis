@@ -52,16 +52,28 @@ model Producteur {
   films         Film[]   @relation("ProducteurFilms")
   createdAt     DateTime @default(now())
 }
-
 model Film {
-  codeFilm       String       @id
-  titre          String
-  dateFilm       DateTime
-  sujet          String
-  image          String?      // URL ou chemin vers l'image
+  codeFilm        String       @id
+  titre           String
+  dateFilm        DateTime
+  sujet           String
+  image           String?      // URL ou chemin vers l'image
   realisateurCode String
   producteurCode  String
-  realisateur    Realisateur  @relation("RealisateurFilms", fields: [realisateurCode], references: [code])
-  producteur     Producteur   @relation("ProducteurFilms", fields: [producteurCode], references: [code])
-  createdAt      DateTime     @default(now())
+  realisateur     Realisateur  @relation("RealisateurFilms", fields: [realisateurCode], references: [code])
+  producteur      Producteur   @relation("ProducteurFilms", fields: [producteurCode], references: [code])
+  projections     Projection[] // <-- ajouter la relation inverse
+  createdAt       DateTime     @default(now())
+}
+
+model Projection {
+  id             String   @id @default(uuid())
+  dateProjection DateTime
+  heure          String
+  salle          String
+  filmCode       String
+  film           Film     @relation(fields: [filmCode], references: [codeFilm])
+
+  statut         String   @default("non_publié") // non_publié | publié
+  createdAt      DateTime @default(now())
 }
