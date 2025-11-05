@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import ModalProducteur from "@/components/modal/ModalProducteur";
 import ModalRealisateur from "@/components/modal/ModalRealisateur";
 import ModalFilm from "@/components/modal/ModalFilm";
-import { Film, Users, Loader2 } from "lucide-react";
+import { Film, Users, Loader2, Trash2 } from "lucide-react";
 
 export default function RespInspection() {
   const [producteurs, setProducteurs] = useState([]);
@@ -56,14 +56,30 @@ export default function RespInspection() {
     setRealisateurs((prev) => [...prev, newRealisateur]);
   };
 
+  // Suppression d’un film
+  const handleDeleteFilm = async (codeFilm) => {
+    if (!confirm("Confirmer la suppression de ce film ?")) return;
+    try {
+      const res = await fetch(`/api/films/${codeFilm}`, { method: "DELETE" });
+      const data = await res.json();
+
+      if (data.success) {
+        setFilms((prev) => prev.filter((f) => f.codeFilm !== codeFilm));
+      } else {
+        alert("Erreur lors de la suppression du film");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la suppression:", error);
+      alert("Erreur de connexion au serveur");
+    }
+  };
+
   // Nom complet du réalisateur
   const getRealisateurName = (realisateurCode) => {
     if (!realisateurCode) return "N/A";
-
     if (typeof realisateurCode === "string" && !realisateurCode.startsWith("REAL")) {
       return realisateurCode;
     }
-
     const real = realisateurs.find((r) => r.code === realisateurCode);
     return real ? `${real.prenom} ${real.nom}` : realisateurCode;
   };
@@ -71,11 +87,9 @@ export default function RespInspection() {
   // Nom complet du producteur
   const getProducteurName = (producteurCode) => {
     if (!producteurCode) return "N/A";
-
     if (typeof producteurCode === "string" && !producteurCode.startsWith("PROD")) {
       return producteurCode;
     }
-
     const prod = producteurs.find((p) => p.code === producteurCode);
     return prod ? `${prod.prenom} ${prod.nom}` : producteurCode;
   };
@@ -138,13 +152,14 @@ export default function RespInspection() {
                     <th className="px-6 py-4 text-left font-bold text-purple-900">Titre</th>
                     <th className="px-6 py-4 text-left font-bold text-purple-900">Réalisateur</th>
                     <th className="px-6 py-4 text-left font-bold text-purple-900">Producteur</th>
-                    <th className="px-6 py-4 text-left font-bold text-purple-900">Durée</th>
+                    <th className="px-6 py-4 text-left font-bold text-purple-900">Image</th>
+                    <th className="px-6 py-4 text-left font-bold text-purple-900">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {films.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="text-center py-12">
+                      <td colSpan={6} className="text-center py-12">
                         <div className="flex flex-col items-center gap-3">
                           <Film className="w-16 h-16 text-gray-300" />
                           <p className="text-gray-500 font-medium">Aucun film enregistré</p>
@@ -175,8 +190,24 @@ export default function RespInspection() {
                         <td className="px-6 py-4 text-gray-600">
                           {getProducteurName(film.producteur?.code || film.producteur)}
                         </td>
-                        <td className="px-6 py-4 text-gray-600">
-                          {film.duree ? `${film.duree} min` : "N/A"}
+                        <td className="px-6 py-4">
+                          {film.image ? (
+                            <img
+                              src={film.image}
+                              alt={film.titre}
+                              className="w-24 h-24 object-cover rounded border"
+                            />
+                          ) : (
+                            "N/A"
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <button
+                            onClick={() => handleDeleteFilm(film.codeFilm)}
+                            className="flex items-center gap-2 text-red-600 hover:text-red-800 transition"
+                          >
+                            <Trash2 size={18} /> Supprimer
+                          </button>
                         </td>
                       </tr>
                     ))

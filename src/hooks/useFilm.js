@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import axios from "axios";
 
 export function useFilm() {
   const [filmData, setFilmData] = useState({
@@ -7,9 +8,9 @@ export function useFilm() {
     titre: "",
     dateFilm: "",
     sujet: "",
-    codeRealisateur: "", // correspond à l'API
-    codeProducteur: "",  // correspond à l'API
-    image: "",           // base64
+    codeRealisateur: "",
+    codeProducteur: "",
+    image: null, // on stocke le File ici
   });
 
   const [realisateurs, setRealisateurs] = useState([]);
@@ -23,16 +24,13 @@ export function useFilm() {
     const fetchData = async () => {
       try {
         const [realRes, prodRes] = await Promise.all([
-          fetch("/api/realisateurs"),
-          fetch("/api/producteurs"),
+          axios.get("/api/realisateurs"),
+          axios.get("/api/producteurs"),
         ]);
 
-        const realData = await realRes.json();
-        const prodData = await prodRes.json();
-
-        setRealisateurs(Array.isArray(realData.data) ? realData.data : []);
-        setProducteurs(Array.isArray(prodData.data) ? prodData.data : []);
-      } catch (err) {
+        setRealisateurs(Array.isArray(realRes.data.data) ? realRes.data.data : []);
+        setProducteurs(Array.isArray(prodRes.data.data) ? prodRes.data.data : []);
+      } catch {
         setError("Erreur lors du chargement des données.");
         setRealisateurs([]);
         setProducteurs([]);
@@ -47,13 +45,7 @@ export function useFilm() {
 
     if (type === "file") {
       const file = files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setFilmData((prev) => ({ ...prev, image: reader.result }));
-        };
-        reader.readAsDataURL(file);
-      }
+      setFilmData((prev) => ({ ...prev, image: file }));
     } else {
       setFilmData((prev) => ({ ...prev, [name]: value }));
     }
@@ -72,23 +64,45 @@ export function useFilm() {
     }
 
     try {
-      const response = await fetch("/api/films", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(filmData),
+      // Création du FormData
+      const formData = new FormData();
+      formData.append("codeFilm", filmData.codeFilm);
+      formData.append("titre", filmData.titre);
+      formData.append("dateFilm", filmData.dateFilm);
+      formData.append("sujet", filmData.sujet);
+      formData.append("codeRealisateur", filmData.codeRealisateur);
+      formData.append("codeProducteur", filmData.codeProducteur);
+      if (filmData.image) formData.append("image", filmData.image);
+
+      // Envoi via Axios
+      const response = await axios.post("/api/films", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
 
-      if (response.ok) {
+      if (response.data.success) {
         setSuccess(true);
-        // Optionnel : reset du formulaire
-        // setFilmData({ codeFilm: "", titre: "", dateFilm: "", sujet: "", codeRealisateur: "", codeProducteur: "", image: "" });
       } else {
-        const data = await response.json();
-        setError(data.error || "Erreur lors de l'enregistrement.");
+        setError(response.data.error || "Erreur lors de l'enregistrement.");
       }
-    } catch {
-      setError("Erreur réseau.");
+    } catch (err) {
+      setError(err.response?.data?.error || "Erreur réseau ou serveur");
     } finally {
+      setIsLoading(false);
+    }
+  };
+  const deleteFilm = async (codeFilm) => {
+    try {
+      const response = await axios.delete(`/api/films/${codeFilm}`);
+      if (response.data.success) {
+        setSuccess(true);
+      }
+    }
+    catch (err) {
+      setError(err.response?.data?.error || "Erreur réseau ou serveur");
+    }
+    finally {
       setIsLoading(false);
     }
   };
@@ -102,5 +116,6 @@ export function useFilm() {
     success,
     realisateurs,
     producteurs,
+    deleteFilm,
   };
 }
