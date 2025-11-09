@@ -44,7 +44,7 @@ export default function useInscription() {
                 setIsAuthenticated(true);
                 setUser(response.data.user);
                 // Redirection ou notification
-                alert('Utilisateur enregistré avec succès');
+               // alert('Utilisateur enregistré avec succès');
             } else {
                 setError(response.data.message || "Erreur lors de l'inscription");
             }

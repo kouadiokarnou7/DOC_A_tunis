@@ -17,7 +17,7 @@ export async function DELETE(req, { params }) {
     return NextResponse.json({ success: true, data: deletedFilm });
   } catch (error) {
     return NextResponse.json(
-      { success: false, error: error.message || "Erreur lors de la suppression." },
+      { success: false, error: error.message || "Erreur , le film étant programmé , ne peut être supprimé ." },
       { status: 500 }
     );
   }

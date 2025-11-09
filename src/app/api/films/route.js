@@ -30,6 +30,7 @@ export async function POST(request) {
     const titre = formData.get("titre");
     const dateFilm = formData.get("dateFilm");
     const sujet = formData.get("sujet");
+    const resume = formData.get("resume");
     const codeRealisateur = formData.get("codeRealisateur");
     const codeProducteur = formData.get("codeProducteur");
     const image = formData.get("image");
@@ -68,6 +69,7 @@ export async function POST(request) {
         titre,
         dateFilm: new Date(dateFilm),
         sujet,
+        resume,
         image: imageUrl, // champ image à ajouter dans ton modèle Prisma
         realisateur: { connect: { code: codeRealisateur } },
         producteur: { connect: { code: codeProducteur } },

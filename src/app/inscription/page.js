@@ -176,6 +176,12 @@ export default function InscriptionPage() {
                             Se connecter
                         </Link>
                     </p>
+                    <p className="text-gray-400">
+            Retour vers la page d'accueil :{" "}
+            <a href="/" className="text-purple-400 hover:text-purple-300 font-semibold transition">
+              Accueil
+            </a>
+          </p>
                 </div>
             </div>
         </div>

@@ -94,6 +94,29 @@ export default function AdminDashboard() {
     </nav>
   );
 
+  const handleDeleteUser = async (id) => {
+    try {
+      const response = await axios.delete(`/api/administrateur/users`, { params: { id } });
+      if (response.data.success) {
+        setUsers((prev) => prev.filter((user) => user.id !== id));
+      }
+    } catch (error) {
+      console.error("Erreur lors de la suppression de l'utilisateur:", error);
+    }
+  };
+
+  const handleUpdateUser = async (id, updatedData) => {
+    try {
+      const response = await axios.put(`/api/administrateur/users`, { id, updatedData });
+      if (response.data.success) {
+        setUsers((prev) => prev.map((user) => user.id === id ? response.data.user : user));
+      }
+    }
+    catch (error) {
+      console.error("Erreur lors de la mise à jour de l'utilisateur:", error);
+    }
+  };
+
   const mainContent = (
     <div className="space-y-6">
       {activeTab === 'users' && (
@@ -159,6 +182,9 @@ export default function AdminDashboard() {
             </div>
 
             <div className="overflow-x-auto">
+              {loading ? (
+                <div className="text-center text-gray-400 py-8">Chargement...</div>
+              ) : (
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-slate-700">
@@ -194,10 +220,10 @@ export default function AdminDashboard() {
                             <button className="text-blue-400 hover:text-blue-300 p-2">
                               <Eye className="w-5 h-5" />
                             </button>
-                            <button className="text-yellow-400 hover:text-yellow-300 p-2">
+                            <button  onClick={() => handleUpdateUser(user.id, user)} className="text-yellow-400 hover:text-yellow-300 p-2">
                               <Edit className="w-5 h-5" />
                             </button>
-                            <button className="text-red-400 hover:text-red-300 p-2">
+                            <button onClick={() => handleDeleteUser(user.id)} className="text-red-400 hover:text-red-300 p-2">
                               <Trash2 className="w-5 h-5" />
                             </button>
                           </div>
@@ -213,6 +239,7 @@ export default function AdminDashboard() {
                   )}
                 </tbody>
               </table>
+              )}
             </div>
 
             {/* ✅ Pagination */}
@@ -280,34 +307,15 @@ export default function AdminDashboard() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            {roles.map((role) => (
-              <Card key={role.id} className="bg-slate-800/50 border-purple-500/20">
-                <CardHeader>
-                  <CardTitle className="text-white">{role.name}</CardTitle>
-                  <CardDescription className="text-gray-400">{role.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {role.permissions.map((perm) => (
-                      <span
-                        key={perm}
-                        className="bg-slate-700 text-gray-200 border border-slate-600 px-3 py-1 rounded-full text-xs"
-                      >
-                        {perm}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="flex gap-2">
-                    <button className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded-lg text-sm">
-                      Modifier
-                    </button>
-                    <button className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg text-sm">
-                      Attribuer
-                    </button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+            <Card className="bg-slate-800/50 border-purple-500/20">
+              <CardHeader>
+                <CardTitle className="text-white">Exemple</CardTitle>
+                <CardDescription className="text-gray-400">Module à implémenter</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-300 text-sm">Gestion des rôles à venir.</p>
+              </CardContent>
+            </Card>
           </div>
         </div>
       )}

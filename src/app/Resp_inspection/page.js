@@ -1,111 +1,135 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import ModalProducteur from "@/components/modal/ModalProducteur";
 import ModalRealisateur from "@/components/modal/ModalRealisateur";
 import ModalFilm from "@/components/modal/ModalFilm";
-import { Film, Users, Loader2, Trash2, Search, X } from "lucide-react";
+import { Film, Users, Loader2, Trash2, Search, X, LogOut } from "lucide-react";
+import useConnexion from "@/hooks/hookconnexion.js";
+import { useFilms } from "@/hooks/useFilms";
+import { useProducteurs } from "@/hooks/useProducteurs";
+import { useRealisateurs } from "@/hooks/useRealisateurs";
 
 export default function RespInspection() {
-  const [producteurs, setProducteurs] = useState([]);
-  const [realisateurs, setRealisateurs] = useState([]);
-  const [films, setFilms] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { user, logout } = useConnexion();
+  
+  // Hooks pour gérer les données
+  const { films, isLoading: filmsLoading, deleteFilm, fetchFilms, addFilm } = useFilms();
+  const { producteurs, isLoading: producteursLoading, fetchProducteurs, addProducteur } = useProducteurs();
+  const { realisateurs, isLoading: realisateursLoading, fetchRealisateurs, addRealisateur } = useRealisateurs();
 
   const [showModalProducteur, setShowModalProducteur] = useState(false);
   const [showModalRealisateur, setShowModalRealisateur] = useState(false);
   const [showModalFilm, setShowModalFilm] = useState(false);
 
-  // État pour la recherche
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Charger les données
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const [prodsRes, realsRes, filmsRes] = await Promise.all([
-          fetch("/api/producteurs"),
-          fetch("/api/realisateurs"),
-          fetch("/api/films"),
-        ]);
+  // État de chargement global
+  const loading = filmsLoading || producteursLoading || realisateursLoading;
 
-        const prodsData = await prodsRes.json();
-        const realsData = await realsRes.json();
-        const filmsData = await filmsRes.json();
-
-        setProducteurs(prodsData.data || []);
-        setRealisateurs(realsData.data || []);
-        setFilms(filmsData.data || []);
-      } catch (error) {
-        console.error("Erreur lors du chargement des données:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
+  function getSalutation() {
+    const hour = new Date().getHours(); // récupère l'heure actuelle
+    if (hour < 12) return "Bonjour";
+    else if (hour < 18) return "Bon après-midi";
+    else return "Bonsoir";
+  }
 
   // Gestion des sauvegardes
-  const handleFilmSaved = (newFilm) => setFilms((prev) => [...prev, newFilm]);
-  const handleProducteurSaved = (newProducteur) =>
-    setProducteurs((prev) => [...prev, newProducteur]);
-  const handleRealisateurSaved = (newRealisateur) =>
-    setRealisateurs((prev) => [...prev, newRealisateur]);
+  const handleFilmSaved = async (newFilm) => {
+    addFilm(newFilm);
+    // Recharger les films pour avoir toutes les données (relations incluses)
+    await fetchFilms();
+    setShowModalFilm(false);
+  };
+
+  const handleProducteurSaved = async (newProducteur) => {
+    addProducteur(newProducteur);
+    // Recharger les producteurs
+    await fetchProducteurs();
+    setShowModalProducteur(false);
+  };
+
+  const handleRealisateurSaved = async (newRealisateur) => {
+    addRealisateur(newRealisateur);
+    // Recharger les réalisateurs
+    await fetchRealisateurs();
+    setShowModalRealisateur(false);
+  };
 
   // Suppression d'un film
   const handleDeleteFilm = async (codeFilm) => {
     if (!confirm("Confirmer la suppression de ce film ?")) return;
-    try {
-      const res = await fetch(`/api/films/${codeFilm}`, { method: "DELETE" });
-      const data = await res.json();
-      if (data.success) {
-        setFilms((prev) => prev.filter((f) => f.codeFilm !== codeFilm));
-      } else {
-        alert("Erreur lors de la suppression du film");
-      }
-    } catch (error) {
-      console.error("Erreur lors de la suppression:", error);
-      alert("Erreur de connexion au serveur");
+    const success = await deleteFilm(codeFilm);
+    if (!success) {
+      alert("Erreur lors de la suppression du film");
     }
   };
 
   // Récupération des noms
-  const getRealisateurName = (realisateurCode) => {
-    if (!realisateurCode) return "N/A";
-    const real = realisateurs.find((r) => r.code === realisateurCode);
-    return real ? `${real.prenom} ${real.nom}` : realisateurCode;
+  const getRealisateurName = (film) => {
+    if (film.realisateur) {
+      // Si c'est un objet (relation incluse)
+      return `${film.realisateur.prenom || ""} ${film.realisateur.nom || ""}`.trim() || "N/A";
+    }
+    // Sinon chercher par code
+    const code = film.realisateurCode || film.realisateur;
+    if (!code) return "N/A";
+    const real = realisateurs.find((r) => r.code === code);
+    return real ? `${real.prenom} ${real.nom}` : code;
   };
 
-  const getProducteurName = (producteurCode) => {
-    if (!producteurCode) return "N/A";
-    const prod = producteurs.find((p) => p.code === producteurCode);
-    return prod ? `${prod.prenom} ${prod.nom}` : producteurCode;
+  const getProducteurName = (film) => {
+    if (film.producteur) {
+      // Si c'est un objet (relation incluse)
+      return `${film.producteur.prenom || ""} ${film.producteur.nom || ""}`.trim() || "N/A";
+    }
+    // Sinon chercher par code
+    const code = film.producteurCode || film.producteur;
+    if (!code) return "N/A";
+    const prod = producteurs.find((p) => p.code === code);
+    return prod ? `${prod.prenom} ${prod.nom}` : code;
   };
 
-  // Fonction de filtrage des films
-  const filteredFilms = films.filter((film) => {
+  // Fonction de filtrage des films avec useMemo pour optimiser
+  const filteredFilms = useMemo(() => {
+    if (!searchTerm) return films;
+    
     const searchLower = searchTerm.toLowerCase();
-    const realisateurName = getRealisateurName(
-      film.realisateur?.code || film.realisateur
-    ).toLowerCase();
-    const producteurName = getProducteurName(
-      film.producteur?.code || film.producteur
-    ).toLowerCase();
+    return films.filter((film) => {
+      // Récupérer les noms directement dans le filtre
+      let realisateurName = "N/A";
+      if (film.realisateur) {
+        realisateurName = `${film.realisateur.prenom || ""} ${film.realisateur.nom || ""}`.trim() || "N/A";
+      } else {
+        const code = film.realisateurCode || film.realisateur;
+        if (code) {
+          const real = realisateurs.find((r) => r.code === code);
+          realisateurName = real ? `${real.prenom} ${real.nom}` : code;
+        }
+      }
 
-    return (
-      film.codeFilm?.toLowerCase().includes(searchLower) ||
-      film.titre?.toLowerCase().includes(searchLower) ||
-      realisateurName.includes(searchLower) ||
-      producteurName.includes(searchLower)
-    );
-  });
+      let producteurName = "N/A";
+      if (film.producteur) {
+        producteurName = `${film.producteur.prenom || ""} ${film.producteur.nom || ""}`.trim() || "N/A";
+      } else {
+        const code = film.producteurCode || film.producteur;
+        if (code) {
+          const prod = producteurs.find((p) => p.code === code);
+          producteurName = prod ? `${prod.prenom} ${prod.nom}` : code;
+        }
+      }
+
+      return (
+        film.codeFilm?.toLowerCase().includes(searchLower) ||
+        film.titre?.toLowerCase().includes(searchLower) ||
+        realisateurName.toLowerCase().includes(searchLower) ||
+        producteurName.toLowerCase().includes(searchLower)
+      );
+    });
+  }, [films, searchTerm, realisateurs, producteurs]);
 
   // Fonction pour effacer la recherche
-  const clearSearch = () => {
-    setSearchTerm("");
-  };
+  const clearSearch = () => setSearchTerm("");
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-violet-50 to-fuchsia-50 p-6">
@@ -147,19 +171,38 @@ export default function RespInspection() {
 
       {/* --- CONTENU PRINCIPAL --- */}
       <div className="max-w-7xl mx-auto">
-        {/* En-tête */}
+        {/* En-tête avec informations utilisateur et déconnexion */}
         <div className="bg-white rounded-2xl shadow-xl p-6 mb-8 border border-purple-100">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-fuchsia-600 bg-clip-text text-transparent flex items-center gap-3">
-            <div className="bg-gradient-to-br from-purple-500 to-fuchsia-600 p-3 rounded-xl">
-              <Film size={32} className="text-white" />
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-fuchsia-600 bg-clip-text text-transparent flex items-center gap-3">
+                <div className="bg-gradient-to-br from-purple-500 to-fuchsia-600 p-3 rounded-xl">
+                  <Film size={32} className="text-white" />
+                </div>
+                Gestion Films - Resp Inspection
+              </h1>
+              <p className="text-gray-600 mt-2 ml-14">
+                {loading
+                  ? "Chargement..."
+                  : `${filteredFilms.length} film(s) affiché(s) sur ${films.length}`}
+              </p>
             </div>
-            Gestion Films - Resp Inspection
-          </h1>
-          <p className="text-gray-600 mt-2 ml-14">
-            {loading
-              ? "Chargement..."
-              : `${filteredFilms.length} film(s) affiché(s) sur ${films.length}`}
-          </p>
+
+            {/* Nom et déconnexion */}
+            {user && (
+              <div className="flex items-center gap-4 bg-gradient-to-br from-purple-50 to-violet-50 px-5 py-3 rounded-xl shadow-md border border-purple-200">
+                <span className="text-gray-800 font-semibold">
+                  {getSalutation()}, {user.nomComplet}
+                </span>
+                <button
+                  onClick={logout}
+                  className="flex items-center gap-2 text-red-600 hover:text-white hover:bg-red-600 px-3 py-2 rounded-lg transition shadow-sm"
+                >
+                  <LogOut size={18} /> Déconnexion
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Boutons d'action */}
@@ -302,14 +345,10 @@ export default function RespInspection() {
                           {film.titre}
                         </td>
                         <td className="px-6 py-4 text-gray-600">
-                          {getRealisateurName(
-                            film.realisateur?.code || film.realisateur
-                          )}
+                          {getRealisateurName(film)}
                         </td>
                         <td className="px-6 py-4 text-gray-600">
-                          {getProducteurName(
-                            film.producteur?.code || film.producteur
-                          )}
+                          {getProducteurName(film)}
                         </td>
                         <td className="px-6 py-4">
                           {film.image ? (

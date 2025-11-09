@@ -14,66 +14,90 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+
+// ------------------- UTILISATEUR -------------------
 model User {
-  id              String   @id @default(uuid())
-  code            String   @unique @default(cuid()) // Tronqué à 5 caractères côté app
-  nomComplet      String
-  email           String   @unique
-  motDePasse      String
-  role            String   @default("UTILISATEUR") //   
-  statut          String   @default("actif")  
-  createdAt       DateTime @default(now())
-  deletedAt       DateTime? // null = non supprimé
+  id         String   @id @default(uuid()) @db.UniqueIdentifier
+  nomComplet String
+  email      String   @unique
+  motDePasse String
+  role       String   @default("UTILISATEUR")
+  statut     String   @default("actif")
+  createdAt  DateTime @default(now())
+  deletedAt  DateTime?
 }
 
+// ------------------- JURY -------------------
 model Jury {
-  code           String   @id
-  nom            String
-  prenom         String
-  date_Naissance DateTime
-  telephone      String
-  nationalite    String
+  code          String        @id
+  nom           String
+  prenom        String
+  dateNaissance DateTime
+  telephone     String
+  nationalite   String
+  assignations  Assignation[]
 }
 
+// ------------------- REALISATEUR -------------------
 model Realisateur {
-  code          String   @id
-  nom           String
-  prenom        String
+  code      String   @id
+  nom       String
+  prenom    String
   dateNaissance DateTime
-  films         Film[]   @relation("RealisateurFilms")
-  createdAt     DateTime @default(now())
+  films     Film[]   @relation("RealisateurFilms")
+  createdAt DateTime @default(now())
 }
 
+// ------------------- PRODUCTEUR -------------------
 model Producteur {
-  code          String   @id
-  nom           String
-  prenom        String
+  code      String   @id
+  nom       String
+  prenom    String
   dateNaissance DateTime
-  films         Film[]   @relation("ProducteurFilms")
-  createdAt     DateTime @default(now())
+  films     Film[]   @relation("ProducteurFilms")
+  createdAt DateTime @default(now())
 }
+
+// ------------------- FILM -------------------
 model Film {
-  codeFilm        String       @id
+  codeFilm        String        @id
   titre           String
   dateFilm        DateTime
   sujet           String
-  image           String?      // URL ou chemin vers l'image
+  resume          String?
+  image           String?
   realisateurCode String
   producteurCode  String
-  realisateur     Realisateur  @relation("RealisateurFilms", fields: [realisateurCode], references: [code])
-  producteur      Producteur   @relation("ProducteurFilms", fields: [producteurCode], references: [code])
-  projections     Projection[] // <-- ajouter la relation inverse
-  createdAt       DateTime     @default(now())
+  realisateur     Realisateur   @relation("RealisateurFilms", fields: [realisateurCode], references: [code])
+  producteur      Producteur    @relation("ProducteurFilms", fields: [producteurCode], references: [code])
+  projections     Projection[]
+  assignations    Assignation[]
+  createdAt       DateTime      @default(now())
 }
 
+// ------------------- PROJECTION -------------------
 model Projection {
-  id             String   @id @default(uuid())
+  id             String   @id @default(uuid()) @db.UniqueIdentifier
   dateProjection DateTime
   heure          String
   salle          String
   filmCode       String
   film           Film     @relation(fields: [filmCode], references: [codeFilm])
-
   statut         String   @default("non_publié") // non_publié | publié
   createdAt      DateTime @default(now())
+}
+
+// ------------------- ASSIGNATION -------------------
+model Assignation {
+  id              Int      @id @default(autoincrement())
+  filmCode        String
+  juryCode        String
+  dateAssignation DateTime
+  heure           String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  film            Film     @relation(fields: [filmCode], references: [codeFilm], onDelete: Cascade)
+  jury            Jury     @relation(fields: [juryCode], references: [code], onDelete: Cascade)
 }

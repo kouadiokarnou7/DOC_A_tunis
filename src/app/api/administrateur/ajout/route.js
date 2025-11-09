@@ -38,7 +38,7 @@ export async function POST(req) {
     const created = await prisma.user.create({
       data: {
         //on doit générer le code de l'utilisateur
-        code: crypto.randomBytes(5).toString('hex'),
+       // code: crypto.randomBytes(5).toString('hex'),
         nomComplet,
         email,
         motDePasse: hash,
@@ -49,7 +49,7 @@ export async function POST(req) {
         id: true,
         nomComplet: true,
         email: true,
-        code: true,
+     
         role: true,
         statut: true,
         createdAt: true,
