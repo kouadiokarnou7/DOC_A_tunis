@@ -20,47 +20,43 @@ export async function GET() {
   }
 }
 
-// POST : créer une nouvelle assignation
+
+// POST : créer de nouvelles assignations
+
+
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { films, jury, date, heure } = body;
+    const { filmCode, jurys, salle, date, heure } = body;
 
-    if (!films || !Array.isArray(films) || films.length === 0 || !jury || !date || !heure) {
+    if (!filmCode || !jurys || !Array.isArray(jurys) || jurys.length === 0 || !date || !heure || !salle) {
       return NextResponse.json(
-        { success: false, error: 'Champs obligatoires manquants ou invalides' },
+        { success: false, error: "Champs obligatoires manquants ou invalides" },
         { status: 400 }
       );
     }
 
-    const assignationsCreated = [];
-    for (const filmCode of films) {
-      const assignation = await prisma.assignation.create({
-        data: {
-          filmCode,
-          juryCode: jury,
-          dateAssignation: new Date(date),
-          heure
-        }
-      });
-      assignationsCreated.push(assignation);
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: 'Assignation(s) créée(s) avec succès',
-      data: assignationsCreated
-    });
-
-  } catch (error) {
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
+    const created = await Promise.all(
+      jurys.map((juryCode) =>
+        prisma.assignation.create({
+          data: {
+            filmCode,
+            juryCode,
+            salle,
+            dateAssignation: new Date(date),
+            heure,
+          },
+        })
+      )
     );
+
+    return NextResponse.json({ success: true, data: created });
+  } catch (err) {
+    console.error("Erreur assignation:", err);
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }
 
-// DELETE : supprimer une assignation par ID
 export async function DELETE(request) {
   try {
     const { searchParams } = new URL(request.url);

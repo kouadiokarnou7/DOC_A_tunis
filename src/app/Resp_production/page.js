@@ -345,7 +345,12 @@ export default function ProductionPage() {
       </Dialog>
 
       {/* Modal Jury */}
-      {openModalJury && (
+      <Dialog open={openModalJury} onOpenChange={(open) => {
+        if (!open) {
+          setOpenModalJury(false);
+          setSelectedProjection(null);
+        }
+      }}>
         <ModalJury
           projection={selectedProjection}
           jurys={jurys}
@@ -355,7 +360,7 @@ export default function ProductionPage() {
           }}
           onAssign={handleJuryAssign}
         />
-      )}
+      </Dialog>
     </div>
   );
 }

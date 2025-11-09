@@ -54,6 +54,7 @@ export default function AssignJuryModal({ onClose, projection, jurys = [], onAss
         juryCodes: selectedJuryCodes,
         date: projectionDate,
         heure: projectionHeure,
+        salle: projectionSalle, 
       });
 
       if (result) {
@@ -68,19 +69,7 @@ export default function AssignJuryModal({ onClose, projection, jurys = [], onAss
   };
 
   if (!projection) {
-    return (
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-red-600">
-            Erreur
-          </DialogTitle>
-        </DialogHeader>
-        <div className="p-4">
-          <p className="text-gray-600">Aucune projection sélectionnée.</p>
-          <Button onClick={onClose} className="mt-4">Fermer</Button>
-        </div>
-      </DialogContent>
-    );
+    return null;
   }
 
   return (

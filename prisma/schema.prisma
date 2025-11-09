@@ -32,7 +32,7 @@ model Jury {
   code          String        @id
   nom           String
   prenom        String
-  dateNaissance DateTime
+  date_Naissance DateTime
   telephone     String
   nationalite   String
   assignations  Assignation[]
@@ -92,12 +92,12 @@ model Assignation {
   id              Int      @id @default(autoincrement())
   filmCode        String
   juryCode        String
+  salle           String
   dateAssignation DateTime
   heure           String
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  // Relations
-  film            Film     @relation(fields: [filmCode], references: [codeFilm], onDelete: Cascade)
-  jury            Jury     @relation(fields: [juryCode], references: [code], onDelete: Cascade)
+  film  Film @relation(fields: [filmCode], references: [codeFilm], onDelete: Cascade)
+  jury  Jury @relation(fields: [juryCode], references: [code], onDelete: Cascade)
 }
