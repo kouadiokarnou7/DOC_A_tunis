@@ -1,7 +1,6 @@
 "use client";
 import { useFilm } from "@/hooks/useFilm";
 import { Save, X } from "lucide-react";
-import { FILM_SUBJECTS } from "@/components/lib/constant";
 
 export default function ModalFilm({ onClose, onSaved }) {
   const {
@@ -15,6 +14,24 @@ export default function ModalFilm({ onClose, onSaved }) {
     producteurs,
   } = useFilm();
 
+  // Liste directe des sujets
+  const sujets = [
+    "Drame",
+    "Comédie",
+    "Action",
+    "Documentaire",
+    "Animation",
+    "Romance",
+    "Thriller",
+    "Science-fiction",
+    "Horreur",
+    "Aventure",
+    "Biopic",
+    "Musical",
+    "Historique",
+    "Fantastique",
+  ];
+
   const submit = async (e) => {
     await handleSubmit(e);
     if (success && onSaved) onSaved(filmData);
@@ -22,9 +39,7 @@ export default function ModalFilm({ onClose, onSaved }) {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-[1000] bg-black/50 backdrop-blur-sm">
-      {/* Conteneur du modal */}
       <div className="relative bg-white/90 dark:bg-gray-900/90 backdrop-blur-md text-gray-900 dark:text-gray-100 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 border border-gray-200 dark:border-gray-700">
-        {/* En-tête */}
         <div className="flex justify-between items-center mb-4 border-b border-gray-300 dark:border-gray-700 pb-2">
           <h2 className="text-2xl font-bold text-purple-700 dark:text-purple-400">
             Enregistrement d'un Film
@@ -37,11 +52,9 @@ export default function ModalFilm({ onClose, onSaved }) {
           </button>
         </div>
 
-        {/* Messages */}
         {error && <p className="text-red-600 mb-3">{error}</p>}
         {success && <p className="text-green-600 mb-3">Film enregistré avec succès.</p>}
 
-        {/* Formulaire */}
         <form onSubmit={submit} className="space-y-3">
           <input
             type="text"
@@ -126,7 +139,6 @@ export default function ModalFilm({ onClose, onSaved }) {
             ))}
           </select>
 
-          {/* Image */}
           <div>
             <label className="block mb-1 font-medium">Image du Film</label>
             <input type="file" name="image" accept="image/*" onChange={handleChange} />
@@ -143,7 +155,6 @@ export default function ModalFilm({ onClose, onSaved }) {
             )}
           </div>
 
-          {/* Boutons */}
           <div className="flex gap-3 mt-4">
             <button
               type="submit"
