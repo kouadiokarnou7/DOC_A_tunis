@@ -1,4 +1,8 @@
 
+
+
+
+// hooks/useConnexion.js
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
@@ -39,12 +43,8 @@ export default function useConnexion() {
             case 'RESPONSABLE_PRODUCTION':
                 router.push('/Resp_production');
                 break;
-            case 'Responsablejury':
-                    router.push('/Responsablejury');
-                    break;
-
             case 'PRESIDENT_JURY':
-          
+            case 'PRESIDENT_JURÉS':
                 router.push('/President_jury');
                 break;
                   

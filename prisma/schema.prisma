@@ -103,15 +103,3 @@ model Assignation {
   film  Film @relation(fields: [filmCode], references: [codeFilm], onDelete: Cascade)
   jury  Jury @relation(fields: [juryCode], references: [code], onDelete: Cascade)
 }
-
-
-model Note {
-  id           Int      @id @default(autoincrement())
-  filmCode     String
-  juryCode     String
-  note         Float
-  dateNotation DateTime @default(now())
-
-  film Film @relation(fields: [filmCode], references: [codeFilm])
-  jury Jury @relation(fields: [juryCode], references: [code])
-}

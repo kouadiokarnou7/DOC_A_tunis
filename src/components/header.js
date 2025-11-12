@@ -43,7 +43,9 @@ export default function LandingHeader() {
     { href: '#programme', label: 'Programme', icon: Calendar },
     { href: '#catalogue', label: 'Catalogue Films', icon: Video },
     { href: '#projections', label: 'Projections', icon: Tv },
-
+    { href: '#jury', label: 'Jury', icon: Users },
+    { href: '#palmares', label: 'Palmarès', icon: Award },
+    { href: '#actualites', label: 'Actualités', icon: Newspaper },
   ];
 
   return (
