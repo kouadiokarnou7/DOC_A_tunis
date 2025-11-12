@@ -32,11 +32,11 @@ model Jury {
   code          String        @id
   nom           String
   prenom        String
-  date_Naissance DateTime
+  dateNaissance DateTime
   telephone     String
   nationalite   String
   assignations  Assignation[]
-   notes           Note[]  
+  
 }
 
 // ------------------- REALISATEUR -------------------
@@ -73,7 +73,7 @@ model Film {
   producteur      Producteur    @relation("ProducteurFilms", fields: [producteurCode], references: [code])
   projections     Projection[]
   assignations    Assignation[]
-   notes           Note[]  
+
   createdAt       DateTime      @default(now())
 }
 
@@ -94,12 +94,12 @@ model Assignation {
   id              Int      @id @default(autoincrement())
   filmCode        String
   juryCode        String
-  salle           String
   dateAssignation DateTime
   heure           String
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  film  Film @relation(fields: [filmCode], references: [codeFilm], onDelete: Cascade)
-  jury  Jury @relation(fields: [juryCode], references: [code], onDelete: Cascade)
+  // Relations
+  film            Film     @relation(fields: [filmCode], references: [codeFilm], onDelete: Cascade)
+  jury            Jury     @relation(fields: [juryCode], references: [code], onDelete: Cascade)
 }
