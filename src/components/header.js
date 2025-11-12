@@ -41,11 +41,9 @@ export default function LandingHeader() {
   const menuItems = [
     { href: '#accueil', label: 'Accueil', icon: Film },
     { href: '#programme', label: 'Programme', icon: Calendar },
-    { href: '#catalogue', label: 'Catalogue Films', icon: Video },
-    { href: '#projections', label: 'Projections', icon: Tv },
-    { href: '#jury', label: 'Jury', icon: Users },
-    { href: '#palmares', label: 'Palmarès', icon: Award },
-    { href: '#actualites', label: 'Actualités', icon: Newspaper },
+    { href: '#catalogue', label: 'Catalogue ', icon: Video },
+    { href: '#Apropos', label: 'A propos', icon: Tv },
+   
   ];
 
   return (

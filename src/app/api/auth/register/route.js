@@ -49,7 +49,7 @@ export async function POST(req) {
         id: true,
         nomComplet: true,
         email: true,
-        code: true,
+
         role: true,
         statut: true,
         createdAt: true,

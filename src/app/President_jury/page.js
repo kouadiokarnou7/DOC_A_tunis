@@ -1,172 +1,200 @@
-"use client";
+"use client"; // obligatoire pour Next.js 13+ App Router si c'est un composant client
 
-import { useState, useMemo } from "react";
-import { Loader2, Search, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button"; // si tu utilises shadcn
-import useConnexion from "@/hooks/hookconnexion";
-import { useSelectionPresident } from "@/hooks/useSelectionPresident";
-import ModalSelection from "@/components/modal/ModalSelection";
+import { useState, useEffect } from "react";
 
-export default function PagePresident() {
-  const {  user, logout } = useConnexion();
+export default function Page() {
+  const [films, setFilms] = useState([]);
+  const [jurys, setJurys] = useState([]);
+  // --- NOUVEAU: notes et états UI
+  const [notes, setNotes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [serverMsg, setServerMsg] = useState("");
 
-  const {
-    assignations = [], // <-- assure un tableau par défaut
-    loading,
-    fetchAssignations,
-    handleSaveNote,
-    handleDeleteNote,
-  } = useSelectionPresident();
+  const [filmCode, setFilmCode] = useState("");
+  const [juryCode, setJuryCode] = useState("");
+  const [note, setNote] = useState("");
 
-  const [selected, setSelected] = useState(null); 
-  const [search, setSearch] = useState("");
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const [resFilms, resJurys, resNotes] = await Promise.all([
+          fetch("/api/films"),
+          fetch("/api/jurys"),
+          fetch("/api/notes"),
+        ]);
 
-  // filtre par titre de film ou nom/prenom du jury
-  const filtered = useMemo(() => {
-    if (!assignations || assignations.length === 0) return [];
-    if (!search.trim()) return assignations;
+        if (!resFilms.ok) throw new Error(`Erreur films: ${resFilms.status}`);
+        if (!resJurys.ok) throw new Error(`Erreur jurys: ${resJurys.status}`);
+        // notes endpoint peut renvoyer 200 avec { data: [] } ou 500 — gérer en conséquence
+        const filmsData = await resFilms.json();
+        const jurysData = await resJurys.json();
+        const notesData = resNotes.ok ? await resNotes.json() : { data: [] };
 
-    const q = search.trim().toLowerCase();
-    return assignations.filter((a) => {
-      const filmTitre = a.film?.titre?.toLowerCase() ?? "";
-      const juryNom = `${a.jury?.nom ?? ""} ${a.jury?.prenom ?? ""}`.toLowerCase();
-      return filmTitre.includes(q) || juryNom.includes(q);
-    });
-  }, [assignations, search]);
+        setFilms(filmsData.data || filmsData);
+        setJurys(jurysData.data || jurysData);
+        setNotes(notesData.data || notesData || []);
 
-  const openModalFor = (assign) => setSelected(assign);
+        setFilmCode((filmsData.data || filmsData)[0]?.codeFilm || "");
+        setJuryCode((jurysData.data || jurysData)[0]?.codeJury || "");
+      } catch (err) {
+        setError(err?.message || "Erreur inconnue");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const onSaveFromModal = async (filmCode, juryCode, note) => {
-    await handleSaveNote(filmCode, juryCode, note);
-    await fetchAssignations();
-    setSelected(null);
+    fetchData();
+  }, []);
+
+  // --- NOUVEAU: validation/clamp côté client
+  const clampNote = n => Math.max(0, Math.min(20, n));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setServerMsg("");
+    const parsed = parseFloat(note);
+    if (!filmCode || !juryCode || isNaN(parsed)) {
+      return setServerMsg("Veuillez remplir tous les champs correctement.");
+    }
+    const clamped = clampNote(parsed);
+
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filmCode, juryCode, note: clamped }),
+      });
+
+      const payload = await res.json().catch(() => null);
+      if (!res.ok) {
+        setServerMsg(payload?.error || "Erreur serveur lors de l'enregistrement");
+        return;
+      }
+
+      const newNote = payload?.data ?? { filmCode, juryCode, note: clamped };
+
+      setNotes(prev => {
+        const idx = prev.findIndex(n => n.filmCode === filmCode && n.juryCode === juryCode);
+        if (idx !== -1) {
+          const next = [...prev];
+          next[idx] = { ...next[idx], note: newNote.note };
+          return next;
+        }
+        return [...prev, newNote];
+      });
+
+      setNote("");
+      setServerMsg("Note enregistrée !");
+    } catch (err) {
+      console.error(err);
+      setServerMsg("Erreur lors de l'enregistrement de la note");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const onDeleteFromModal = async (filmCode, juryCode) => {
-    await handleDeleteNote(filmCode, juryCode);
-    await fetchAssignations();
-    setSelected(null);
-  };
-
-  if (loading) {
-    return (
-      <div className="p-6 flex items-center justify-center">
-        <Loader2 className="animate-spin text-gray-500" />
-      </div>
-    );
-  }
+  if (loading) return <p>Chargement...</p>;
+  if (error) return <p className="text-red-600 font-bold">Erreur: {error}</p>;
 
   return (
-    <div className="p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Espace Président du Jury</h1>
-        <div className="flex items-center gap-4">
-          {/* Recherche */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Rechercher film ou jury..."
-              className="pl-10 pr-3 py-2 border rounded-md w-72"
-            />
-          </div>
+    <div className="p-6 max-w-2xl mx-auto">
+      <h1 className="text-2xl font-bold mb-4">Films et Jurys</h1>
 
-          {/* Utilisateur connecté */}
-          {user && (
-            <div className="flex items-center gap-3 bg-white rounded-xl px-3 py-2 shadow-sm">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-fuchsia-500 flex items-center justify-center text-white font-bold">
-                {user.nomComplet?.charAt(0)?.toUpperCase() ?? ""}
-              </div>
-              <div className="text-sm">
-                <div className="text-xs text-gray-500">Connecté</div>
-                <div className="font-semibold text-purple-700">{user.nomComplet}</div>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="ml-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-                onClick={logout}
-              >
-                <LogOut className="w-4 h-4 mr-1" />
-                Déconnexion
-              </Button>
-            </div>
-          )}
-        </div>
+      {/* ...existing code for film & jury selects ... */}
+      <div className="mb-4">
+        <label className="block font-medium mb-1">Film</label>
+        <select
+          value={filmCode}
+          onChange={e => setFilmCode(e.target.value)}
+          className="w-full border rounded px-2 py-1"
+        >
+          {films.map(f => (
+            <option key={f.codeFilm} value={f.codeFilm}>
+              {f.titre || f.name || f.title || f.codeFilm}
+            </option>
+          ))}
+        </select>
       </div>
 
-      
-{filtered && filtered.length > 0 ? (
-  <div className="overflow-x-auto">
-    <table className="w-full border text-sm">
-      <thead className="bg-gray-100 text-left">
-        <tr>
-          <th className="p-2 border">Film</th>
-          <th className="p-2 border">Jury</th>
-          <th className="p-2 border">Salle</th>
-          <th className="p-2 border">Date</th>
-          <th className="p-2 border">Heure</th>
-          <th className="p-2 border text-center">Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        {filtered.map((a) => (
-          <tr key={`${a.filmCode}-${a.juryCode}-${a.id ?? ""}`} className="hover:bg-gray-50">
-            <td className="p-2 border">{a.film?.titre ?? a.filmCode}</td>
-            <td className="p-2 border">{a.jury ? `${a.jury.nom} ${a.jury.prenom}` : a.juryCode}</td>
-            <td className="p-2 border">{a.salle ?? "-"}</td>
-            <td className="p-2 border">{a.dateAssignation ? new Date(a.dateAssignation).toLocaleDateString("fr-FR") : "-"}</td>
-            <td className="p-2 border">{a.heure ?? "-"}</td>
-            <td className="p-2 border text-center">
-              {a.note != null ? (
-                <div className="flex items-center justify-center gap-2">
-                  <div className="font-semibold text-green-700">{a.note}</div>
-                  <button
-                    onClick={async () => {
-                      if (!confirm("Supprimer cette note ?")) return;
-                      await onDeleteFromModal(a.filmCode, a.juryCode);
-                    }}
-                    className="text-sm text-red-600 hover:underline"
-                  >
-                    Supprimer
-                  </button>
-                  <button
-                    onClick={() => setSelected(a)}
-                    className="ml-2 text-sm text-gray-600 hover:underline"
-                  >
-                    Modifier
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => openModalFor(a)}
-                  className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
-                >
-                  Noter
-                </button>
-              )}
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-) : (
-  <p className="text-center text-gray-500 mt-4">Aucune assignation trouvée.</p>
-)}
+      <div className="mb-4">
+        <label className="block font-medium mb-1">Jury</label>
+        <select
+          value={juryCode}
+          onChange={e => setJuryCode(e.target.value)}
+          className="w-full border rounded px-2 py-1"
+        >
+          {jurys.map(j => (
+            <option key={j.codeJury} value={j.codeJury}>
+              {j.prenom} {j.nom}
+            </option>
+          ))}
+        </select>
+      </div>
 
+      {/* --- NOUVEAU: formulaire note */}
+      <form onSubmit={handleSubmit} className="mb-6 space-y-3 border p-4 rounded shadow">
+        <div>
+          <label className="block font-medium mb-1">Note (0 - 20)</label>
+          <input
+            type="number"
+            min="0"
+            max="20"
+            step="0.1"
+            value={note}
+            onChange={e => setNote(e.target.value)}
+            className="w-full border rounded px-2 py-1"
+            disabled={submitting}
+          />
+        </div>
 
+        <div className="flex items-center gap-3">
+          <button
+            type="submit"
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+            disabled={submitting}
+          >
+            {submitting ? "Enregistrement..." : "Enregistrer la note"}
+          </button>
+          {serverMsg && <span className="text-sm text-gray-700">{serverMsg}</span>}
+        </div>
+      </form>
 
-      {/* Modal de notation */}
-      <ModalSelection
-        isOpen={!!selected}
-        assignation={selected}
-        onClose={() => setSelected(null)}
-        onSaveNote={onSaveFromModal}
-        onDeleteNote={onDeleteFromModal}
-      />
+      {/* --- NOUVEAU: liste des notes */}
+      <div className="border rounded shadow p-4">
+        <h2 className="font-bold mb-2">Notes enregistrées</h2>
+        {notes.length === 0 ? (
+          <p>Aucune note enregistrée</p>
+        ) : (
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="border p-2 text-left">Film</th>
+                <th className="border p-2 text-left">Jury</th>
+                <th className="border p-2 text-left">Note</th>
+              </tr>
+            </thead>
+            <tbody>
+              {notes.map(n => {
+                const film = films.find(f => f.codeFilm === n.filmCode);
+                const jury = jurys.find(j => j.codeJury === n.juryCode);
+                const key = `${n.filmCode}-${n.juryCode}`;
+                return (
+                  <tr key={key} className="odd:bg-white even:bg-gray-50">
+                    <td className="border p-2">{film?.titre || film?.name || n.filmCode}</td>
+                    <td className="border p-2">{jury ? `${jury.prenom} ${jury.nom}` : n.juryCode}</td>
+                    <td className="border p-2">{n.note}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }
