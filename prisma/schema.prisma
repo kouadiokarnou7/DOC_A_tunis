@@ -36,6 +36,7 @@ model Jury {
   telephone     String
   nationalite   String
   assignations  Assignation[]
+   notes           Note[]  
 }
 
 // ------------------- REALISATEUR -------------------
@@ -72,6 +73,7 @@ model Film {
   producteur      Producteur    @relation("ProducteurFilms", fields: [producteurCode], references: [code])
   projections     Projection[]
   assignations    Assignation[]
+   notes           Note[]  
   createdAt       DateTime      @default(now())
 }
 
@@ -110,7 +112,6 @@ model Note {
   note         Float
   dateNotation DateTime @default(now())
 
-  // Relations
   film Film @relation(fields: [filmCode], references: [codeFilm])
-  jury Jury @relation(fields: [juryCode], references: [codeJury])
+  jury Jury @relation(fields: [juryCode], references: [code])
 }

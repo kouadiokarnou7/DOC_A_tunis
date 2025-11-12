@@ -1,27 +1,23 @@
-import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
 
-// GET : récupérer toutes les assignations
+import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
+
 export async function GET() {
   try {
     const assignations = await prisma.assignation.findMany({
-      orderBy: { id: 'asc' },
       include: {
         film: true,
         jury: true
-      }
+      },
+      orderBy: { id: "asc" }
     });
-    return NextResponse.json({ success: true, data: assignations });
-  } catch (error) {
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json(assignations); 
+  } catch (err) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
 
 
-// POST : créer de nouvelles assignations
 
 
 export async function POST(request) {
